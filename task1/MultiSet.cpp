@@ -13,7 +13,15 @@ unsigned MultiSet::getBitOffset(unsigned int num) const {
 MultiSet ::MultiSet() : n(0), k(0), bucketSize(0), buckets(nullptr)
 { }
 
-MultiSet ::MultiSet(unsigned n, unsigned numberBits) : n(n), k (numberBits), bucketSize((n*k + 7) / 8 ) {
+MultiSet ::MultiSet(unsigned n, unsigned k) : n(n) {
+    if (k > 8 || k < 1) {
+        this -> k = 8;
+    }
+
+    this -> k = k;
+
+    bucketSize = (n*k + 7) / 8;
+
     buckets = new uint8_t [bucketSize] {0};
 }
 
@@ -70,16 +78,16 @@ bool MultiSet :: addNumber (unsigned num) {
     if (offset + k > 8) {
         unsigned nextIndex = idx + 1;
         unsigned shiftInNextBucket = offset + k - 8; // how many bits spill over to the next bucket
-        unsigned valueInFirstBucket = buckets[idx] >> offset; //extract the bits from the curr bucket
-        unsigned valueInSecondBucket = buckets[nextIndex] & ((1 << shiftInNextBucket) - 1); //extract from next
+        unsigned valueInFirstBucket = (buckets[idx] >> offset) & ((1 << (8 - offset)) - 1); //extract the bits from the curr bucket
+        unsigned valueInSecondBucket = (buckets[nextIndex] & ((1 << shiftInNextBucket) - 1)); //extract from next
         //combine the two values to form the full current value
         unsigned currentValue = valueInFirstBucket | (valueInSecondBucket << (8 - offset));
         if (currentValue < mask) { // if the max representation has not been reached yet
             currentValue++; //add
-            buckets[idx] &= ~(mask >> (8 - offset)); //clear the current bits
-            buckets[idx] |= currentValue << offset; //set the new value
+            buckets[idx] &= ~(mask << offset); //clear the current bits
+            buckets[idx] |= (currentValue << offset) & ((1 << 8) - 1);  // set lower part in the first bucket
             buckets[nextIndex] &= ~((1 << shiftInNextBucket) - 1); //clear the next bucket
-            buckets[nextIndex] |= currentValue >> (8 - offset); // set the new value
+            buckets[nextIndex] |= (currentValue >> (8 - offset)); // set the new value
             return true;
         }
 
@@ -184,3 +192,14 @@ void MultiSet::printSet() const {
     }
     std::cout << '}';
 }
+
+void MultiSet::printBinary() const {
+    for (unsigned i = 0; i < bucketSize; ++i) {
+        std::cout << "Bucket " << i << ": ";
+        for (int j = 7; j >= 0; j--) {  // Print each bit in the byte
+            std::cout << ((buckets[i] & (1 << j)) ? '1' : '0');
+        }
+        std::cout << std::endl;
+    }
+}
+
