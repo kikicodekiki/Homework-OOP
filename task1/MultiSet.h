@@ -13,7 +13,7 @@ class MultiSet {
 
     void free();
     void copyFrom (const MultiSet& other);
-    
+
 
 public:
 
@@ -28,6 +28,17 @@ public:
     unsigned getCountOccurrences (unsigned num) const;
 
     void printSet() const;
+    void printBinary() const;
+#include <bitset> // For std::bitset for easy binary printing
+
+    void printBucketsInBinary() const {
+        std::cout << "Multiset Buckets in Binary:" << std::endl;
+        for (unsigned i = 0; i < bucketSize; ++i) {
+            // Convert each bucket's content to binary and print it
+            std::cout << "Bucket " << i << ": " << std::bitset<8>(buckets[i]) << std::endl;
+        }
+    }
+
 
     void serialize (const char* fileName) const;
 
@@ -35,5 +46,7 @@ public:
 
 friend MultiSet intersect (const MultiSet& lhs, const MultiSet& rhs);
 friend MultiSet unify (const MultiSet& lhs, const MultiSet& rhs);
+
+};, 
 
 };
