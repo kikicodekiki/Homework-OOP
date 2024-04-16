@@ -202,4 +202,43 @@ void MultiSet::printBinary() const {
         std::cout << std::endl;
     }
 }
+void MultiSet :: serialize (const char* fileName) const {
+    std::ofstream ofs (fileName, std::ios::out | std::ios::binary);
+
+    if (!ofs.is_open()) {
+        std::cerr << "File " << fileName << "not open";
+        return;
+    }
+
+    ofs.write((const char*)&n, sizeof(n));
+    ofs.write((const char*)&k, sizeof(k));
+    ofs.write ((const char*)&bucketSize, sizeof (unsigned ));
+    ofs.write ((const char*)buckets, bucketSize);
+
+    ofs.close();
+}
+
+void MultiSet::deserialize(const char *fileName) {
+    std::ifstream ifs (fileName, std::ios::in | std::ios::binary);
+
+    if (!ifs.is_open()) {
+        std::cerr << "File " << fileName << "not open";
+        return;
+    }
+
+    ifs.read((char*)&n, sizeof(n));
+    ifs.read((char*)&k, sizeof(k));
+
+    bucketSize = (n*k + 7) / 8;
+
+    delete[] buckets;
+    buckets = new uint8_t [bucketSize] {0};
+
+    ifs.read((char*)buckets, bucketSize);
+
+    ifs.close();
+
+}
+
+
 
