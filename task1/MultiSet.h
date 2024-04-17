@@ -42,11 +42,10 @@ public:
 
     void serialize (const char* fileName) const;
 
-    void deserialize (const char* fileName) const;
+    void deserialize (const char* fileName);
 
 friend MultiSet intersect (const MultiSet& lhs, const MultiSet& rhs);
 friend MultiSet unify (const MultiSet& lhs, const MultiSet& rhs);
 
-};, 
-
+};
 };
