@@ -47,5 +47,5 @@ public:
 friend MultiSet intersect (const MultiSet& lhs, const MultiSet& rhs);
 friend MultiSet unify (const MultiSet& lhs, const MultiSet& rhs);
 
-};
+
 };
