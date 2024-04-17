@@ -1,6 +1,7 @@
 #include <iostream>
 #include "MultiSet.h"
 #pragma once
+#include <fstream>
 
 unsigned MultiSet::getIndex (unsigned num) const {
     return (num*k) / 8;
@@ -196,12 +197,13 @@ void MultiSet::printSet() const {
 void MultiSet::printBinary() const {
     for (unsigned i = 0; i < bucketSize; ++i) {
         std::cout << "Bucket " << i << ": ";
-        for (int j = 7; j >= 0; j--) {  // Print each bit in the byte
+        for (int j = 7; j >= 0; j--) {  // print each bit in the byte
             std::cout << ((buckets[i] & (1 << j)) ? '1' : '0');
         }
         std::cout << std::endl;
     }
 }
+
 void MultiSet :: serialize (const char* fileName) const {
     std::ofstream ofs (fileName, std::ios::out | std::ios::binary);
 
@@ -212,8 +214,10 @@ void MultiSet :: serialize (const char* fileName) const {
 
     ofs.write((const char*)&n, sizeof(n));
     ofs.write((const char*)&k, sizeof(k));
-    ofs.write ((const char*)&bucketSize, sizeof (unsigned ));
+    //ofs.write ((const char*)&bucketSize, sizeof (unsigned ));
+
     ofs.write ((const char*)buckets, bucketSize);
+
 
     ofs.close();
 }
@@ -231,14 +235,16 @@ void MultiSet::deserialize(const char *fileName) {
 
     bucketSize = (n*k + 7) / 8;
 
+    //ifs.read((char*)&bucketSize, sizeof (unsigned));
+
     delete[] buckets;
     buckets = new uint8_t [bucketSize] {0};
 
-    ifs.read((char*)buckets, bucketSize);
+
+    ifs.read((char *) buckets, bucketSize);
 
     ifs.close();
 
 }
-
 
 
