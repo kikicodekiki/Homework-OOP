@@ -332,3 +332,129 @@ bool operator>= (const ModifiableIntegersFunction& f, const ModifiableIntegersFu
     return (f > g) || (f == g);
 }
 
+bool operator|| (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) {
+
+    double initialRatio = 0.0;
+    bool ratioSet = false;  // flag to see if the initial ratio has been set
+
+    for (int i = 0; i < ModifiableIntegersFunction::MAX_SIZE; i++) {
+        int16_t input = (int16_t)(i - INT16_MAX - 1);
+
+        if (f.isPointExcluded(input) || g.isPointExcluded(input)) {
+            if (f.isPointExcluded(input) && g.isPointExcluded(input)) {
+                continue;  // both excluded
+            }
+            return false;  // only one is excluded
+        }
+
+        int16_t fResult;
+        int16_t gResult;
+
+        try {
+            fResult = f(input);
+            gResult = g(input);
+        } catch (const std::runtime_error&) {
+            return false;  // not parallel if either throws an error
+        }
+
+        //division by zero
+        if (gResult == 0) {
+            return false;
+        }
+
+        double currentRatio = (double)(fResult) / gResult;
+
+        if (!ratioSet) {
+            initialRatio = currentRatio; //set the initial ratio difference
+            ratioSet = true;
+        } else if (std::fabs(currentRatio - initialRatio) > 1e-9) {  // epsilon for two doubles comparison
+            return false;
+        }
+    }
+
+    return ratioSet;
+
+}
+
+
+ModifiableIntegersFunction operator^ (const ModifiableIntegersFunction& f, unsigned k) {
+    if (k == 0) {
+        //return identity function
+        return ModifiableIntegersFunction([](int16_t x) { return x; });
+    }
+
+    ModifiableIntegersFunction result(f); //f^1
+
+    for (unsigned i = 1; i < k; i++) {
+        result = result * f;
+    }
+
+    return result;
+
+}
+
+bool ModifiableIntegersFunction::isInjection() const {
+    bool hasImage[UINT16_MAX + 1] = {false};
+
+    for (int i = 0; i < MAX_SIZE; ++i) {
+
+        int16_t input = (int16_t)(i - INT16_MAX - 1);
+
+        if (!isPointExcluded(input) && !isModified[i]) {
+            int16_t result = ogFunc(input);
+
+            if (hasImage[result + INT16_MAX + 1]) {
+                return false; // already mapped
+            }
+
+            hasImage[result + INT16_MAX + 1] = true;
+        }
+    }
+    return true;
+}
+
+bool ModifiableIntegersFunction::isSurjection() const {
+
+    bool hasPreimage[UINT16_MAX + 1] = {false};
+
+    for (int i = 0; i < MAX_SIZE; ++i) {
+
+        int16_t input = (int16_t)(i - INT16_MAX - 1);
+        if (!isPointExcluded(input)) {
+            int16_t result = operator()(input);
+
+            hasPreimage[result + INT16_MAX + 1] = true;
+        }
+    }
+    for (int i = 0; i < UINT16_MAX + 1; ++i) {
+        if (!hasPreimage[i]) {
+            return false; // output value that does not have any preimage
+        }
+    }
+    return true;
+}
+
+bool ModifiableIntegersFunction::isBijection() const {
+    return isInjection() && isSurjection();
+}
+
+ModifiableIntegersFunction ModifiableIntegersFunction::inverse () const {
+
+   if (!isBijection()) { //invertible only when it's bijection
+       throw std::runtime_error ("function not invertible");
+   }
+
+    ModifiableIntegersFunction invFunc (this-> ogFunc);
+
+    for (int i = 0; i < MAX_SIZE; ++i) {
+        int16_t input = (int16_t)(i - INT16_MAX - 1);
+
+        if (!isPointExcluded(input) && !isModified[i]) {
+            int16_t result = ogFunc(input);
+            invFunc.setResultForSpecificInput(result, input);
+        }
+    }
+
+    return invFunc;
+
+}
