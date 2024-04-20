@@ -4,6 +4,8 @@
 #include <cstdint>  // For int16_t, uint16_t, UINT16_MAX
 #include <stdexcept>
 
+const int ModifiableIntegersFunction:: MAX_SIZE ;
+
 ModifiableIntegersFunction ::ModifiableIntegersFunction(int16_t (*myFunc)(int16_t)) : ogFunc(myFunc) {
 
     results = new int16_t* [MAX_SIZE] {nullptr};
@@ -165,19 +167,23 @@ ModifiableIntegersFunction operator+ (const ModifiableIntegersFunction& lhs, con
 
 ModifiableIntegersFunction& ModifiableIntegersFunction::operator-= (const ModifiableIntegersFunction& rhs) {
     for (int i = 0; i < MAX_SIZE; i++) {
-        int16_t leftValue = (results[i] != nullptr) ? *results[i] : ogFunc(i - INT16_MAX);
-        int16_t rightValue = (rhs.results[i] != nullptr) ? *rhs.results[i] : rhs.ogFunc(i - INT16_MAX);
-
-        if (results[i] == nullptr && rhs.results[i] == nullptr && !isModified[i] && !rhs.isModified[i]) {
-            continue;  // Optionally, skip to avoid unnecessary modifications
+        int16_t input = (int16_t)(i - INT16_MAX - 1);
+        if ( isPointExcluded(input) || rhs.isPointExcluded(input)) {
+            continue;
         }
 
-        if (results[i] == nullptr) {
-            results[i] = new int16_t(leftValue);
+        int16_t lhsValue = (!isPointNull(input)) ? *results[i] : ogFunc(input);
+        int16_t rhsValue = (!rhs.isPointExcluded(input)) ? *rhs.results[i] : rhs.ogFunc(input);
+
+        if ( isPointNull(input) ) {
+            results[i] = new int16_t(lhsValue);
         }
-        *results[i] -= rightValue;
+
+        *results[i] -= rhsValue;
         isModified[i] = true;
+        isExcluded[i] = false;
     }
+
     return *this;
 }
 
@@ -192,10 +198,137 @@ ModifiableIntegersFunction operator- (const ModifiableIntegersFunction& lhs, con
 
 ModifiableIntegersFunction operator*(const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) {
     //will use the * operator for composition
-    //ModifiableIntegersFunction composition(f); // creating a copy
+    ModifiableIntegersFunction composition; // using the default constructor with the dummy function
 
+    for (int i = 0; i < ModifiableIntegersFunction::MAX_SIZE; i++ ) {
 
+        int16_t input = (int16_t)(i - INT16_MAX - 1);
 
+        try {
+            //apply f and then g
+            int16_t resultOfg = g(input);
+            int16_t finalResult = f(resultOfg);
 
+            composition.setResultForSpecificInput(input, finalResult);
 
+        } catch (const std::runtime_error& ) {
+            //an error is thrown when a point is excluded so that means
+            // that the composition should also exclude it
+            composition.excludePoint(input);
+        }
+
+    }
+
+    return composition;
 }
+
+bool operator< (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) {
+
+
+    for (int i = 0 ; i < ModifiableIntegersFunction::MAX_SIZE; i++) {
+        int16_t input = (int16_t)(i - INT16_MAX - 1);
+
+        int16_t fResult, gResult;
+        fResult = gResult = INT16_MIN; //default
+
+        if (!f.isPointExcluded(input)) {
+            try {
+                fResult = f(input);
+            } catch (const std::runtime_error&) {
+                fResult = INT16_MIN; //if it's excluded it sets it to the min possible value
+            }
+        }
+
+        if (!g.isPointExcluded(input)) {
+            try {
+                gResult = g(input);
+            } catch (const std::runtime_error&) {
+                gResult = INT16_MIN;
+            }
+        }
+
+        if (fResult >= gResult) { //checking for the opposite
+            return false;
+        }
+
+    }
+
+    return true; //the comparison is valid
+}
+
+bool operator> (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) {
+    for (int i = 0 ; i < ModifiableIntegersFunction::MAX_SIZE; i++) {
+        int16_t input = (int16_t)(i - INT16_MAX - 1);
+
+        int16_t fResult, gResult;
+        fResult = gResult = INT16_MIN; //default
+
+        if (!f.isPointExcluded(input)) {
+            try {
+                fResult = f(input);
+            } catch (const std::runtime_error&) {
+                fResult = INT16_MIN; //if it's excluded it sets it to the min possible value
+            }
+        }
+
+        if (!g.isPointExcluded(input)) {
+            try {
+                gResult = g(input);
+            } catch (const std::runtime_error&) {
+                gResult = INT16_MIN;
+            }
+        }
+
+        if (fResult <= gResult) { //checking for the opposite
+            return false;
+        }
+
+    }
+
+    return true; //the comparison is valid
+}
+
+bool operator== (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) {
+    for (int i = 0 ; i < ModifiableIntegersFunction::MAX_SIZE; i++) {
+        int16_t input = (int16_t)(i - INT16_MAX - 1);
+
+        int16_t fResult, gResult;
+        fResult = gResult = INT16_MIN; //default
+
+        if (!f.isPointExcluded(input)) {
+            try {
+                fResult = f(input);
+            } catch (const std::runtime_error&) {
+                fResult = INT16_MIN; //if it's excluded it sets it to the min possible value
+            }
+        }
+
+        if (!g.isPointExcluded(input)) {
+            try {
+                gResult = g(input);
+            } catch (const std::runtime_error&) {
+                gResult = INT16_MIN;
+            }
+        }
+
+        if (fResult != gResult) { //checking for the opposite
+            return false;
+        }
+
+    }
+
+    return true;
+}
+
+bool operator!= (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) {
+    return !(f == g);
+}
+
+bool operator<= (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) {
+    return ( f < g ) || (f == g);
+}
+
+bool operator>= (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) {
+    return (f > g) || (f == g);
+}
+
