@@ -18,7 +18,7 @@ ModifiableIntegersFunction ::ModifiableIntegersFunction(int16_t (*myFunc)(int16_
 
 }
 
-void ModifiableIntegersFunction::free() {
+void ModifiableIntegersFunction::free() noexcept {
 
     for (int i = 0; i < MAX_SIZE; i++) {
 
@@ -168,25 +168,29 @@ ModifiableIntegersFunction operator+ (const ModifiableIntegersFunction& lhs, con
 
 ModifiableIntegersFunction& ModifiableIntegersFunction::operator-= (const ModifiableIntegersFunction& rhs) {
     for (int i = 0; i < MAX_SIZE; i++) {
-        int16_t input = (int16_t)(i - INT16_MAX - 1);
-        if ( isPointExcluded(input) || rhs.isPointExcluded(input)) {
-            continue;
+        if (isPointExcluded(i) || rhs.isPointExcluded(i)) {
+            continue;  // skip for excluded points
         }
 
-        int16_t lhsValue = (!isPointNull(input)) ? *results[i] : ogFunc(input);
-        int16_t rhsValue = (!rhs.isPointExcluded(input)) ? *rhs.results[i] : rhs.ogFunc(input);
-
-        if ( isPointNull(input) ) {
-            results[i] = new int16_t(lhsValue);
+        // ensure results is initialized for the current idx
+        if (results[i] == nullptr && (ogFunc != nullptr || rhs.ogFunc != nullptr)) {
+            int16_t thisVal = ogFunc ? ogFunc(i - INT16_MAX - 1) : 0;
+            results[i] = new int16_t(thisVal);
         }
 
-        *results[i] -= rhsValue;
+        // subtract values if the rhs result is not nullptr
+        if (rhs.results[i] != nullptr) {
+            *results[i] -= *rhs.results[i];
+        } else if (rhs.ogFunc != nullptr) { // use original function if no specific result is set
+            *results[i] -= rhs.ogFunc(i - INT16_MAX - 1);
+        }
+
+        // mark index as modified
         isModified[i] = true;
-        isExcluded[i] = false;
     }
-
     return *this;
 }
+
 
 
 ModifiableIntegersFunction operator- (const ModifiableIntegersFunction& lhs, const ModifiableIntegersFunction& rhs) {
@@ -224,7 +228,6 @@ ModifiableIntegersFunction operator*(const ModifiableIntegersFunction& f, const 
 }
 
 bool operator< (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) {
-
 
     for (int i = 0 ; i < ModifiableIntegersFunction::MAX_SIZE; i++) {
         int16_t input = (int16_t)(i - INT16_MAX - 1);
@@ -348,18 +351,16 @@ bool operator|| (const ModifiableIntegersFunction& f, const ModifiableIntegersFu
             return false;  // only one is excluded
         }
 
-        int16_t fResult;
-        int16_t gResult;
+        int16_t fResult = f(input);
+        int16_t gResult = g(input);
 
-        try {
-            fResult = f(input);
-            gResult = g(input);
-        } catch (const std::runtime_error&) {
-            return false;  // not parallel if either throws an error
-        }
 
         //division by zero
-        if (gResult == 0) {
+        if (gResult == 0 && fResult ==0) {
+            continue;
+        }
+
+        if(gResult == 0) {
             return false;
         }
 
@@ -370,10 +371,12 @@ bool operator|| (const ModifiableIntegersFunction& f, const ModifiableIntegersFu
             ratioSet = true;
         } else if (std::fabs(currentRatio - initialRatio) > 1e-9) {  // epsilon for two doubles comparison
             return false;
+        } else if (std::fabs(currentRatio - initialRatio) < 1e-9) {
+            return true;
         }
     }
 
-    return ratioSet;
+    return true;
 
 }
 
@@ -381,7 +384,7 @@ bool operator|| (const ModifiableIntegersFunction& f, const ModifiableIntegersFu
 ModifiableIntegersFunction operator^ (const ModifiableIntegersFunction& f, unsigned k) {
     if (k == 0) {
         //return identity function
-        return ModifiableIntegersFunction([](int16_t x) { return x; });
+        return ModifiableIntegersFunction(dummyFunc);
     }
 
     ModifiableIntegersFunction result(f); //f^1
@@ -568,4 +571,5 @@ void ModifiableIntegersFunction::print(int x1, int x2, int y1, int y2) const {
         std::cout << std::endl;
     }
 }
+
 
