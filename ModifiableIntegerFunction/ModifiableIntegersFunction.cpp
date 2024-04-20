@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstdint>  // For int16_t, uint16_t, UINT16_MAX
 #include <stdexcept>
+#include <fstream>
 
 const int ModifiableIntegersFunction:: MAX_SIZE ;
 
@@ -438,23 +439,133 @@ bool ModifiableIntegersFunction::isBijection() const {
     return isInjection() && isSurjection();
 }
 
-ModifiableIntegersFunction ModifiableIntegersFunction::inverse () const {
+ModifiableIntegersFunction ModifiableIntegersFunction::inverse() const {
+    if (!isBijection()) { //only invertible when a bijection
+        throw std::runtime_error("Function not invertible");
+    }
 
-   if (!isBijection()) { //invertible only when it's bijection
-       throw std::runtime_error ("function not invertible");
-   }
-
-    ModifiableIntegersFunction invFunc (this-> ogFunc);
+    ModifiableIntegersFunction invFunc(this->ogFunc);  //reusing the original func pointer
 
     for (int i = 0; i < MAX_SIZE; ++i) {
         int16_t input = (int16_t)(i - INT16_MAX - 1);
 
-        if (!isPointExcluded(input) && !isModified[i]) {
-            int16_t result = ogFunc(input);
-            invFunc.setResultForSpecificInput(result, input);
+        if (!isPointExcluded(input)) {
+            int16_t output = (isModified[i] && results[i]) ? *results[i] : ogFunc(input);
+            uint16_t newIndex = output + INT16_MAX + 1;
+
+            if (invFunc.results[newIndex] != nullptr) {
+                throw std::runtime_error("Attempting to map one output to multiple inputs");
+            }
+
+            invFunc.results[newIndex] = new int16_t(input);
+            invFunc.isModified[newIndex] = true;
+        } else {
+            // exclude the corresponding output in the inverse
+            int16_t output = (isModified[i] && results[i]) ? *results[i] : ogFunc(input);
+            uint16_t newIndex = output + INT16_MAX + 1;
+            invFunc.excludePoint(newIndex);
         }
     }
 
     return invFunc;
+}
+
+void ModifiableIntegersFunction::serialize (const char* fileName) const {
+    std::ofstream out (fileName, std::ios::binary);
+
+    if (!out.is_open()) {
+        std::cerr << fileName << "unable to open";
+        return;
+    }
+
+    for (int i = 0; i < MAX_SIZE; i++) {
+        out.write ((const char*)&isModified[i], sizeof (isModified[i]));
+        out.write ((const char*)&isExcluded[i], sizeof (isExcluded[i]));
+
+        //write result if modified and not null
+        if(isModified[i] && results[i] != nullptr) {
+            int16_t value = *results[i];
+            out.write ((const char*)& value, sizeof (int16_t));
+        }
+    }
+
+    out.close();
 
 }
+
+void ModifiableIntegersFunction::deserialize(const char *fileName) {
+    std::ifstream in(fileName, std::ios::binary);
+    if (!in.is_open()) {
+        std::cerr << fileName << "unable to open";
+        return;
+    }
+
+    //i am writing directly back into the same object of the class
+    //because I have no idea how to write a function pointer and then read it lol
+    //enjoy :)
+
+    this->free(); // clear current data
+    results = new int16_t*[MAX_SIZE] {nullptr};
+
+    for (int i = 0; i < MAX_SIZE; ++i) {
+        // read modification and exclusion flags
+        in.read((char*)(&isModified[i]), sizeof(isModified[i]));
+        in.read((char*)(&isExcluded[i]), sizeof(isExcluded[i]));
+
+        if (isModified[i] && !isExcluded[i]) {
+            int16_t value;
+            in.read((char*)(&value), sizeof(value));
+            results[i] = new int16_t(value);
+        } else {
+            results[i] = nullptr;
+        }
+    }
+
+    in.close();
+}
+
+void ModifiableIntegersFunction::print(int x1, int x2, int y1, int y2) const {
+    if (x2 - x1 != 19 || y2 - y1 != 19) {
+        std::cerr << "Invalid range";
+        return;
+    }
+
+    // 20x20 grid initialized with spaces
+    char plot[20][20];
+    for (int i = 0; i < 20; ++i) {
+        for (int j = 0; j < 20; ++j) {
+            plot[i][j] = ' ';
+        }
+    }
+
+    // plotting the function within the specified ranges
+    for (int x = x1; x <= x2; ++x) {
+        int16_t result = 0;
+        try {
+            result = this->operator()(x);
+            if (result < y1 || result > y2) {
+                continue; // skip values outside the y-range
+            }
+
+            // calculate the plot indices
+            int xIndex = x - x1;
+            int yIndex = y2 - result;
+
+            if (xIndex >= 0 && xIndex < 20 && yIndex >= 0 && yIndex < 20) {
+                plot[yIndex][xIndex] = '*';
+            }
+        } catch (const std::runtime_error& e) {
+            // excluded or other error cases - no plot
+            continue;
+        }
+    }
+
+    // ptint out the matrix
+    for (int i = 0; i < 20; ++i) {
+        for (int j = 0; j < 20; ++j) {
+            std::cout << plot[i][j];
+        }
+        std::cout << std::endl;
+    }
+}
+
