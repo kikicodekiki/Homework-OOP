@@ -33,6 +33,8 @@ public:
 
     static const int MAX_SIZE = UINT16_MAX + 1 ;
 
+    ModifiableIntegersFunction inverse () const;
+
 private:
     int16_t (*ogFunc) (int16_t); // func pointer
 
@@ -48,6 +50,10 @@ private:
     void copyFrom (const ModifiableIntegersFunction& other);
     //void moveFrom(&&)
 
+    bool isInjection() const;
+    bool isSurjection () const;
+    bool isBijection() const;
+
 };
 
 ModifiableIntegersFunction operator* (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) ;
@@ -61,4 +67,7 @@ bool operator!= (const ModifiableIntegersFunction& f, const ModifiableIntegersFu
 bool operator<= (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) ;
 bool operator>= (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) ;
 
+bool operator|| (const ModifiableIntegersFunction& f, const ModifiableIntegersFunction& g) ;
+
+ModifiableIntegersFunction operator^ (const ModifiableIntegersFunction& f, unsigned k) ;//for multiple
 
