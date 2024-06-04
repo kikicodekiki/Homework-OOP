@@ -1,7 +1,7 @@
 #include "PartialFunctionMaximum.h"
 
 
-PartialFunctionMaximum ::PartialFunctionMaximum(const PartialFunctionContainer &funcs) : ContainerHolder(container)
+PartialFunctionMaximum ::PartialFunctionMaximum(const PartialFunctionContainer &funcs) : ContainerHolder(funcs)
 {}
 
 
@@ -39,4 +39,5 @@ int32_t PartialFunctionMaximum::operator()(int32_t point) const {
 
 PartialFunction* PartialFunctionMaximum::clone() const {
     return new PartialFunctionMaximum(*this);
+}ximum(*this);
 }
