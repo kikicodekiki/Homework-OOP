@@ -12,7 +12,7 @@ public:
 protected:
     int32_t arguments[MAX_SIZE];
     int16_t N;
-    virtual int pointIndex (int32_t point) const = 0;
+    int getIndex (int32_t point) const;
 };
 
 constexpr size_t Criteria::MAX_SIZE;
