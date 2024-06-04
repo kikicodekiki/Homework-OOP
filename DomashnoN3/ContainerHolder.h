@@ -5,6 +5,6 @@
 class ContainerHolder : public PartialFunction {
 public:
     ContainerHolder(const PartialFunctionContainer& container) : container(container){}
-private:
+protected:
     PartialFunctionContainer container;
 };
