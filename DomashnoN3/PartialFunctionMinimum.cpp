@@ -1,5 +1,5 @@
 #include "PartialFunctionMinimum.h"
-PartialFunctionMinimum ::PartialFunctionMinimum(const PartialFunctionContainer &funcs) : ContainerHolder(container)
+PartialFunctionMinimum ::PartialFunctionMinimum(const PartialFunctionContainer &funcs) : ContainerHolder(funcs)
 {}
 
 bool PartialFunctionMinimum::isDefined(int32_t point) const {
