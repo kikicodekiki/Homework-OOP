@@ -10,7 +10,5 @@ public:
 
 private:
     int32_t results[MAX_SIZE];
-    int pointIndex (int32_t point) const override;
 
 };
-
