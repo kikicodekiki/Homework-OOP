@@ -8,6 +8,8 @@
 #include "SecondCriteria.h"
 #include "ThirdCriteria.h"
 
+const static int maxN = 32;
+
 PartialFunction* PartialFunctionFactory::createFunctionFromFile(const MyString &fileName) {
 
     std::ifstream myFile (fileName.c_str(), std::ios::binary);
@@ -21,8 +23,6 @@ PartialFunction* PartialFunctionFactory::createFunctionFromFile(const MyString &
 
 PartialFunction* PartialFunctionFactory::constructFromBinary(std::ifstream &ifs) {
     int16_t N, T;
-
-    static int maxN = 32;
 
     static int first = 0, second = 1, third = 2, fourth = 3, fifth = 4;
 
@@ -58,7 +58,7 @@ PartialFunction* PartialFunctionFactory::constructFromBinary(std::ifstream &ifs)
 }
 
 PartialFunction* PartialFunctionFactory::handleFourthCase (std::ifstream& ifs, int16_t N) {
-    MyString filePaths[N];
+    MyString filePaths[maxN];
     PartialFunctionContainer container;
 
     for (size_t i = 0; i < N; i++) {
@@ -76,7 +76,7 @@ PartialFunction* PartialFunctionFactory::handleFourthCase (std::ifstream& ifs, i
 }
 
 PartialFunction* PartialFunctionFactory::handleFifthCase (std::ifstream& ifs, int16_t N) {
-    MyString filePaths[N];
+    MyString filePaths[maxN];
     PartialFunctionContainer container;
 
     for (size_t i = 0; i < N; i++) {
@@ -93,8 +93,8 @@ PartialFunction* PartialFunctionFactory::handleFifthCase (std::ifstream& ifs, in
 }
 
 PartialFunction* PartialFunctionFactory::firstCriteria (std::ifstream& ifs, int16_t N ) {
-    int32_t args[N];
-    int32_t results[N];
+    int32_t args[maxN];
+    int32_t results[maxN];
 
     ifs.read((char*) args, sizeof(int32_t) * N);
     ifs.read((char*)results, sizeof(int32_t) * N);
@@ -105,7 +105,7 @@ PartialFunction* PartialFunctionFactory::firstCriteria (std::ifstream& ifs, int1
 }
 
 PartialFunction* PartialFunctionFactory::secondCriteria (std::ifstream& ifs, int16_t N ) {
-    int32_t args[N];
+    int32_t args[maxN];
 
     ifs.read((char*)args, sizeof(int32_t) * N);
 
@@ -115,7 +115,7 @@ PartialFunction* PartialFunctionFactory::secondCriteria (std::ifstream& ifs, int
 }
 
 PartialFunction* PartialFunctionFactory::thirdCriteria (std::ifstream& ifs, int16_t N ) {
-    int32_t args[N];
+    int32_t args[maxN];
 
     ifs.read((char*) args, sizeof(int32_t) * N);
 
