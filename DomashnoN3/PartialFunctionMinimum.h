@@ -10,6 +10,4 @@ public:
     int32_t operator()(int32_t point) const override;
     PartialFunction* clone() const override;
 
-private:
-    PartialFunctionContainer container;
 };
