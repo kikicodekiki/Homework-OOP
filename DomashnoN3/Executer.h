@@ -6,6 +6,7 @@
 class Executer {
 public:
     Executer(const MyString& fileName);
+    Executer(const char* fileName);
     ~Executer();
 
     Executer(const Executer& other) = delete;
