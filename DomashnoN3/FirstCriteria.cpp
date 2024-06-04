@@ -6,18 +6,20 @@ FirstCriteria ::FirstCriteria (int32_t* newArgs, int32_t* newResults, int16_t N)
     }
 }
 
-int FirstCriteria::pointIndex(int32_t point) const {
-    for (size_t i = 0; i < N; i++) {
-        if (point == arguments[i]) {
-            return i;
-        }
-    }
-    throw std::out_of_range ("such point does not exist");
-}
-
 Pair<bool,int32_t> FirstCriteria::operator()(int32_t point) const {
     Pair<bool,int32_t> result;
-    size_t index = pointIndex(point);
+    size_t index = getIndex(point);
+
+    static int invalidIndex = -1;
+    static int invalidNum = 0;
+
+
+    if (index == invalidIndex) {
+        result.setFirst(false);
+        result.setSecond(invalidNum);
+
+        return result;
+    }
 
     result.setFirst(true);
     result.setSecond(results[index]);
