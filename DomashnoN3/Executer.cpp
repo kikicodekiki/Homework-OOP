@@ -14,6 +14,7 @@ Executer::Executer(const MyString &fileName) {
 }
 
 Executer::~Executer() {
+    std::cout << "~Executer()";
     free();
 }
 
@@ -25,10 +26,16 @@ void Executer::executeOverInterval(int32_t a, int32_t b) const {
 
     for (int32_t i = a; i <= b; i++) {
         if (func->isDefined(i)) {
+            try{
             std::cout << "f(" << i << ") = " << func->operator()(i) << std::endl;
-        } else {
-            std::cout << "f(" << i << ") is not defined.\n" ;
+            } catch (std::exception& e) {
+                //nothing
+            }
+
         }
+        //else {
+//            std::cout << "f(" << i << ") is not defined.\n" ;
+//        }
 
     }
 }
@@ -77,6 +84,7 @@ void Executer::userRequestedExecution() const {
 
 void Executer::free() {
     delete func;
+
 }
 
 Executer::Executer(const char *fileName) {
@@ -86,5 +94,8 @@ Executer::Executer(const char *fileName) {
         std::cerr << "Failed to create function " << e.what();
         func = nullptr;
     }
+}
+
+
 }
 
