@@ -3,9 +3,6 @@
 #include "Executer.h"
 #include "myString.h"
 
-#include <fstream>
-#include <iostream>
-
 void createCase0File(const MyString& fileName) {
     std::ofstream ofs(fileName.c_str(), std::ios::binary);
     if (!ofs) {
@@ -13,10 +10,10 @@ void createCase0File(const MyString& fileName) {
         return;
     }
 
-    int16_t N = 3;
+    int16_t N = 7;
     int16_t T = 0;
-    int32_t args[] = {1, 2, 3};
-    int32_t results[] = {10, 20, 30};
+    int32_t args[] = {0, 1, 2,3,5,6,7};
+    int32_t results[] = {0,3,3,3,4,4,0};
 
     ofs.write(reinterpret_cast<char*>(&N), sizeof(N));
     ofs.write(reinterpret_cast<char*>(&T), sizeof(T));
@@ -32,9 +29,9 @@ void createCase1File(const MyString& fileName) {
         return;
     }
 
-    int16_t N = 3;
+    int16_t N = 2;
     int16_t T = 1;
-    int32_t args[] = {1, 2, 3};
+    int32_t args[] = {3,5};
 
     ofs.write(reinterpret_cast<char*>(&N), sizeof(N));
     ofs.write(reinterpret_cast<char*>(&T), sizeof(T));
@@ -49,9 +46,9 @@ void createCase2File(const MyString& fileName) {
         return;
     }
 
-    int16_t N = 3;
+    int16_t N = 4;
     int16_t T = 2;
-    int32_t args[] = {1, 2, 3};
+    int32_t args[] = {0,5,6,7};
 
     ofs.write(reinterpret_cast<char*>(&N), sizeof(N));
     ofs.write(reinterpret_cast<char*>(&T), sizeof(T));
@@ -119,13 +116,13 @@ int main() {
     createCase2File("func2.dat");
     createCase3File("func3.dat");
     createCase4File("func4.dat");
-    try {
+   try {
         MyString fileName0("func0.dat");
-        std::cout << "\nTesting Case 0:" << std::endl;
+       std::cout << "\nTesting Case 0:" << std::endl;
         testExecutor(fileName0);
     } catch (const std::exception& e) {
         std::cerr << "Failed to test Case 0: " << e.what() << std::endl;
-    }
+   }
 
     try {
         MyString fileName1("func1.dat");
@@ -134,7 +131,7 @@ int main() {
     } catch (const std::exception& e) {
         std::cerr << "Failed to test Case 1: " << e.what() << std::endl;
     }
-
+//
     try {
         MyString fileName2("func2.dat");
         std::cout << "\nTesting Case 2:" << std::endl;
@@ -159,5 +156,5 @@ int main() {
         std::cerr << "Failed to test Case 4: " << e.what() << std::endl;
     }
 
-    return 0;
+
 }
